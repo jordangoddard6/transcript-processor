@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Whiteley's Transcript Processor</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue-dark:   #1a4f7a;
+      --blue:        #1f6baa;
+      --blue-light:  #2d85c8;
+      --yellow:      #f5c400;
+      --yellow-light:#ffe066;
+      --white:       #ffffff;
+      --off-white:   #f4f7fb;
+      --border:      #c5d9ec;
+      --border-dark: #9bbad4;
+      --text:        #0e2d45;
+      --text-muted:  #5a7a94;
+      --text-dim:    #3a6080;
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+      --serif: 'Lora', serif;
+    }
+
+    body {
+      background: var(--off-white);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 80px;
+    }
+
+    /* Hero banner */
+    .hero {
+      width: 100%;
+      background: var(--blue-dark);
+      padding: 40px 24px 36px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--yellow), var(--yellow-light), var(--yellow));
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -30px; left: -10%; right: -10%;
+      height: 60px;
+      background: var(--off-white);
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    }
+
+    .hero-title {
+      font-family: var(--serif);
+      font-size: clamp(24px, 5vw, 36px);
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+    }
+
+    .hero-title span {
+      color: var(--yellow);
+    }
+
+    .hero-subtitle {
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      font-family: var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Love note */
+    .love-note {
+      margin-top: 52px;
+      width: 100%;
+      max-width: 580px;
+      padding: 0 24px;
+    }
+
+    .love-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--yellow);
+      padding: 20px 24px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      box-shadow: 0 2px 12px rgba(30,80,130,0.06);
+    }
+
+    .love-icon {
+      font-size: 22px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .love-text {
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 15px;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+
+    .love-text strong {
+      color: var(--blue-dark);
+      font-style: normal;
+      font-weight: 600;
+    }
+
+    /* Main container */
+    .container {
+      width: 100%;
+      max-width: 580px;
+      padding: 36px 24px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* Privacy note */
+    .privacy-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #e8f2fb;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--blue-light);
+      padding: 12px 16px;
+      margin-bottom: 28px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-family: var(--mono);
+    }
+
+    .privacy-note::before {
+      content: '🔒';
+      flex-shrink: 0;
+      margin-top: 1px;
+      font-size: 13px;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed var(--border-dark);
+      padding: 44px 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--white);
+      position: relative;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 6px rgba(30,80,130,0.04);
+    }
+
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--blue-light);
+      background: #eef6fd;
+    }
+
+    .drop-zone.dragover {
+      box-shadow: inset 0 0 40px rgba(31, 107, 170, 0.06);
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-icon {
+      font-size: 30px;
+      margin-bottom: 14px;
+      display: block;
+      opacity: 0.5;
+    }
+
+    .drop-label {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    .drop-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+    }
+
+    /* File selected state */
+    .file-info {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--blue);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+    }
+
+    .file-info.visible { display: flex; }
+
+    .file-name {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--blue);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-clear {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+      padding: 0 2px;
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+
+    .file-clear:hover { color: #c0392b; }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 15px;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background: var(--blue-dark);
+      color: var(--white);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--blue);
+      box-shadow: 0 4px 16px rgba(30,80,130,0.2);
+    }
+
+    .btn-primary:disabled {
+      background: var(--border);
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    /* Output section */
+    .output-section {
+      display: none;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 28px;
+    }
+
+    .output-section.visible { display: flex; }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--blue-dark);
+      padding: 10px 16px;
+    }
+
+    .output-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .output-stats {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .output-stats span {
+      color: var(--yellow);
+    }
+
+    .output-preview {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-top: none;
+      padding: 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.8;
+      max-height: 220px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .output-preview::-webkit-scrollbar { width: 4px; }
+    .output-preview::-webkit-scrollbar-track { background: transparent; }
+    .output-preview::-webkit-scrollbar-thumb { background: var(--border-dark); }
+
+    .btn-download {
+      background: var(--yellow);
+      color: var(--blue-dark);
+      margin-top: 14px;
+      font-weight: 500;
+    }
+
+    .btn-download:hover {
+      background: var(--yellow-light);
+      box-shadow: 0 4px 16px rgba(245, 196, 0, 0.3);
+    }
+
+    .btn-reset {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      margin-top: 10px;
+      font-size: 11px;
+    }
+
+    .btn-reset:hover {
+      border-color: var(--border-dark);
+      color: var(--text-dim);
+    }
+
+    /* Error */
+    .error-msg {
+      display: none;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #c0392b;
+      padding: 12px 16px;
+      border: 1px solid rgba(192, 57, 43, 0.3);
+      background: rgba(192, 57, 43, 0.05);
+      margin-top: 14px;
+    }
+
+    .error-msg.visible { display: block; }
+
+    /* Footer */
+    .footer {
+      margin-top: 48px;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .footer-bar {
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--blue-dark), var(--blue-light), var(--yellow));
+      position: fixed;
+      bottom: 0;
+      left: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="hero-title"><span>Whiteley's</span> Transcript Processor</div>
+    <div class="hero-subtitle">Session Transcript Tool</div>
+  </div>
+
+  <div class="love-note">
+    <div class="love-card">
+      <div class="love-icon">💛</div>
+      <div class="love-text">
+        <strong>For Whiteley —</strong> I made this website especially for you. I hope it makes your work a little easier and your day a little brighter.
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="privacy-note">
+      All processing happens entirely in your browser. Your transcript never leaves your device — no server, no uploads, no logs.
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".txt"/>
+      <span class="drop-icon">📄</span>
+      <div class="drop-label">Drop your transcript file here</div>
+      <div class="drop-sub">or click to browse &nbsp;·&nbsp; .txt files only</div>
+    </div>
+
+    <div class="file-info" id="fileInfo">
+      <span class="file-name" id="fileName"></span>
+      <button class="file-clear" id="fileClear" title="Remove file">×</button>
+    </div>
+
+    <button class="btn btn-primary" id="processBtn" disabled>Process Transcript</button>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div class="output-section" id="outputSection">
+      <div class="output-header">
+        <span class="output-label">Output Preview</span>
+        <span class="output-stats" id="outputStats"></span>
+      </div>
+      <div class="output-preview" id="outputPreview"></div>
+      <button class="btn btn-download" id="downloadBtn">↓ &nbsp; Download Processed File</button>
+      <button class="btn btn-reset" id="resetBtn">Process Another File</button>
+    </div>
+
+    <div class="footer">no data stored &nbsp;·&nbsp; client-side only &nbsp;·&nbsp; made with 💛 for Whiteley</div>
+  </div>
+
+  <div class="footer-bar"></div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileClear = document.getElementById('fileClear');
+    const processBtn = document.getElementById('processBtn');
+    const outputSection = document.getElementById('outputSection');
+    const outputPreview = document.getElementById('outputPreview');
+    const outputStats = document.getElementById('outputStats');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const errorMsg = document.getElementById('errorMsg');
+
+    let selectedFile = null;
+    let processedOutput = '';
+
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) setFile(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) setFile(fileInput.files[0]);
+    });
+
+    function setFile(file) {
+      if (!file.name.endsWith('.txt')) {
+        showError('Please select a .txt file.');
+        return;
+      }
+      selectedFile = file;
+      fileName.textContent = file.name;
+      fileInfo.classList.add('visible');
+      dropZone.style.display = 'none';
+      processBtn.disabled = false;
+      hideError();
+      outputSection.classList.remove('visible');
+    }
+
+    fileClear.addEventListener('click', resetAll);
+    resetBtn.addEventListener('click', resetAll);
+
+    function resetAll() {
+      selectedFile = null;
+      processedOutput = '';
+      fileInput.value = '';
+      fileInfo.classList.remove('visible');
+      dropZone.style.display = '';
+      processBtn.disabled = true;
+      outputSection.classList.remove('visible');
+      hideError();
+    }
+
+    processBtn.addEventListener('click', () => {
+      if (!selectedFile) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const result = processTranscript(e.target.result);
+          processedOutput = result.text;
+          outputPreview.textContent = processedOutput;
+          outputStats.innerHTML = `<span>${result.lines}</span> speaker turns`;
+          outputSection.classList.add('visible');
+          hideError();
+        } catch (err) {
+          showError('Could not process file: ' + err.message);
+        }
+      };
+      reader.onerror = () => showError('Could not read the file.');
+      reader.readAsText(selectedFile);
+    });
+
+    function processTranscript(raw) {
+      const metaPattern = /^\[(.+)\]\s+\d{2}:\d{2}:\d{2}$/;
+      const lines = raw.split(/\r?\n/);
+
+      let currentSpeaker = null;
+      let currentText = '';
+      const output = [];
+
+      for (const line of lines) {
+        const match = line.match(metaPattern);
+        if (match) {
+          const speaker = match[1];
+          if (speaker !== currentSpeaker) {
+            if (currentText) output.push(currentText);
+            currentSpeaker = speaker;
+            currentText = '';
+          }
+        } else {
+          const trimmed = line.trim();
+          if (trimmed) {
+            currentText = currentText ? currentText + ' ' + trimmed : trimmed;
+          }
+        }
+      }
+
+      if (currentText) output.push(currentText);
+
+      return {
+        text: output.join('\n'),
+        lines: output.length
+      };
+    }
+
+    downloadBtn.addEventListener('click', () => {
+      if (!processedOutput) return;
+      const baseName = selectedFile.name.replace(/\.txt$/i, '');
+      const outName = baseName + '_processed.txt';
+      const blob = new Blob([processedOutput], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = outName;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.add('visible');
+    }
+
+    function hideError() {
+      errorMsg.classList.remove('visible');
+    }
+  </script>
+</body>
+</html>
