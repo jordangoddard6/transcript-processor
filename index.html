@@ -342,6 +342,23 @@
       box-shadow: 0 4px 16px rgba(245, 196, 0, 0.3);
     }
 
+    .btn-copy {
+      background: transparent;
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      margin-top: 10px;
+    }
+
+    .btn-copy:hover {
+      background: #eef6fd;
+    }
+
+    .btn-copy.copied {
+      color: #2a7a2a;
+      border-color: #2a7a2a;
+      background: #efffef;
+    }
+
     .btn-reset {
       background: transparent;
       color: var(--text-muted);
@@ -433,6 +450,7 @@
         <span class="output-stats" id="outputStats"></span>
       </div>
       <div class="output-preview" id="outputPreview"></div>
+      <button class="btn btn-copy" id="copyBtn">⎘ &nbsp; Copy to Clipboard</button>
       <button class="btn btn-download" id="downloadBtn">↓ &nbsp; Download Processed File</button>
       <button class="btn btn-reset" id="resetBtn">Process Another File</button>
     </div>
@@ -456,7 +474,9 @@
     const resetBtn = document.getElementById('resetBtn');
     const errorMsg = document.getElementById('errorMsg');
 
-    let selectedFile = null;
+    const copyBtn = document.getElementById('copyBtn');
+
+
     let processedOutput = '';
 
     dropZone.addEventListener('click', () => {
@@ -562,6 +582,20 @@
         lines: output.length
       };
     }
+
+    copyBtn.addEventListener('click', () => {
+      if (!processedOutput) return;
+      navigator.clipboard.writeText(processedOutput).then(() => {
+        copyBtn.textContent = '✓  Copied!';
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+          copyBtn.innerHTML = '⎘ &nbsp; Copy to Clipboard';
+          copyBtn.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        showError('Could not copy to clipboard. Please try downloading instead.');
+      });
+    });
 
     downloadBtn.addEventListener('click', () => {
       if (!processedOutput) return;
