@@ -169,6 +169,7 @@
       position: relative;
       margin-bottom: 20px;
       box-shadow: 0 1px 6px rgba(30,80,130,0.04);
+      user-select: none;
     }
 
     .drop-zone:hover,
@@ -181,13 +182,8 @@
       box-shadow: inset 0 0 40px rgba(31, 107, 170, 0.06);
     }
 
-    .drop-zone input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
+    #fileInput {
+      display: none;
     }
 
     .drop-icon {
@@ -415,8 +411,8 @@
       FOR ANYONE ELSE USING THIS: All processing happens only in your browser. Your transcript never leaves your device and is not stored anywhere. Does not breach confidentiality 
     </div>
 
+    <input type="file" id="fileInput" accept=".txt"/>
     <div class="drop-zone" id="dropZone">
-      <input type="file" id="fileInput" accept=".txt"/>
       <span class="drop-icon">📄</span>
       <div class="drop-label">Drop your transcript file here</div>
       <div class="drop-sub">or click to browse &nbsp;·&nbsp; .txt files only</div>
@@ -462,6 +458,10 @@
 
     let selectedFile = null;
     let processedOutput = '';
+
+    dropZone.addEventListener('click', () => {
+      fileInput.click();
+    });
 
     dropZone.addEventListener('dragover', e => {
       e.preventDefault();
